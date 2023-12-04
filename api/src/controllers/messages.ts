@@ -1,23 +1,37 @@
-import { Socket } from "socket.io";
-import UserModel from "../models/user";
-import MessageModel from "../models/message";
+import { Server, Socket } from "socket.io";
+import { RequestHandler } from "express";
+import MessageModel, { Message } from "../models/message";
 
 class MessagesController {
-  async handleSendMessage(
-    socket: Socket,
-    { content }: { content: string }
-  ): Promise<void> {
-    try {
-      // Handle send message logic
-    } catch (error) {
-      console.error("Error sending message:", error.message);
-    }
-  }
+  constructor(private io: Server) {}
 
-  async handleDisconnect(socket: Socket): Promise<void> {
-    console.log("User disconnected");
-    // Handle user leave logic
-  }
+  getMessages: RequestHandler<{ roomId: string }> = async (req, res) => {
+    try {
+      const messages = await MessageModel.find({ roomId: req.params.roomId });
+      return res.json(messages);
+    } catch (error: any) {
+      console.error("Error getting messages:", error.message);
+      throw error;
+    }
+  };
+
+  addMessage: RequestHandler<{}, {}, Message> = async (req, res) => {
+    try {
+      const { content, roomId, userName } = req.body;
+
+      const message = await MessageModel.create({
+        content,
+        roomId,
+        userName,
+      });
+
+      this.io.to(roomId).emit("receive_message", message);
+
+      res.status(201).json({ message });
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
 }
 
-export default new MessagesController();
+export default MessagesController;

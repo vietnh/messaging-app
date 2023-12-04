@@ -1,9 +1,19 @@
 import express from "express";
-import loginController from "../controllers/login";
-import messagesController from "../controllers/messages";
+import LoginController from "../controllers/login";
+import MessagesController from "../controllers/messages";
+import { Server } from "socket.io";
 
-const router = express.Router();
+const routes = (io: Server) => {
+  const router = express.Router();
 
-router.post("/api/login", loginController.handleLogin);
+  const loginController = new LoginController(io);
+  const messagesController = new MessagesController(io);
 
-export default router;
+  router.post("/api/login", loginController.login);
+  router.get("/api/messages/:roomId", messagesController.getMessages);
+  router.post("/api/messages", messagesController.addMessage);
+
+  return router;
+};
+
+export default routes;

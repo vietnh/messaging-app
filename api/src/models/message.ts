@@ -1,15 +1,15 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface Message {
-  userId: mongoose.Types.ObjectId;
+  userName: string;
   roomId: string;
-  message: string;
+  content: string;
 }
 
 const messageSchema = new Schema<Message & Document>(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
+    userName: {
+      type: String,
       ref: "User",
       required: true,
     },
@@ -17,7 +17,7 @@ const messageSchema = new Schema<Message & Document>(
       type: String,
       required: true,
     },
-    message: {
+    content: {
       type: String,
       required: true,
     },

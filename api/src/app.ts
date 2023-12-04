@@ -1,10 +1,11 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import http from "http";
 import mongoose from "mongoose";
-import socketIo, { Server as SocketIoServer, Socket } from "socket.io";
-import UserModel, { User } from "./models/user";
-import MessageModel, { Message } from "./models/message";
+import { Server as SocketIoServer, Socket } from "socket.io";
+import UserModel from "./models/user";
+import MessageModel from "./models/message";
 import routes from "./routes";
+import cors from "cors";
 
 class ChatApp {
   private app: Application;
@@ -14,7 +15,7 @@ class ChatApp {
   constructor() {
     this.app = express();
     this.server = http.createServer(this.app);
-    this.io = new socketIo.Server(this.server);
+    this.io = new SocketIoServer(this.server);
 
     this.configureMiddleware();
     this.configureRoutes();
@@ -24,10 +25,11 @@ class ChatApp {
 
   private configureMiddleware(): void {
     this.app.use(express.json());
+    this.app.use(cors());
   }
 
   private configureRoutes(): void {
-    this.app.use(routes);
+    this.app.use(routes(this.io));
   }
 
   private configureSocketIO(): void {
@@ -35,64 +37,40 @@ class ChatApp {
   }
 
   private connectToDatabase(): void {
-    mongoose.connect("mongodb://mongodb:27017/chatApp", {
+    mongoose.connect("mongodb://localhost:27017/chatApp", {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    });
+    } as mongoose.ConnectOptions);
   }
 
-  private async handleLogin(req: Request, res: Response): Promise<void> {
-    try {
-      const { username, room, userId } = req.body;
-      const existingUser = await UserModel.findOne({
-        username,
-        currentRoom: room,
-      });
+  // private async handleUserJoin(username: string, room: string): Promise<void> {
+  //   this.io.to(room).emit("userJoined", { username });
 
-      if (existingUser) {
-        res.status(400).json({ error: "Username is not unique in the room" });
-        return;
-      }
+  //   const user = await UserModel.findOneAndUpdate(
+  //     { username },
+  //     { username, currentRoom: room },
+  //     { upsert: true, new: true }
+  //   );
 
-      if (userId) {
-        await this.handleUserLeave(userId);
-      }
+  //   const messages = await MessageModel.find({ roomId: room }).populate("user");
+  //   this.io.to(user.currentRoom).emit("roomMessages", { messages });
+  // }
 
-      await this.handleUserJoin(username, room);
-
-      res.status(200).json({ user: existingUser });
-    } catch (error) {
-      console.error("Error handling login:", error.message);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-
-  private async handleUserJoin(username: string, room: string): Promise<void> {
-    this.io.to(room).emit("userJoined", { username });
-
-    const user = await UserModel.findOneAndUpdate(
-      { username },
-      { username, currentRoom: room },
-      { upsert: true, new: true }
-    );
-
-    const messages = await MessageModel.find({ roomId: room }).populate("user");
-    this.io.to(user.currentRoom).emit("roomMessages", { messages });
-  }
-
-  private async handleUserLeave(userId: string): Promise<void> {
-    const user = await UserModel.findById(userId);
-    if (user) {
-      this.io
-        .to(user.currentRoom)
-        .emit("userLeft", { username: user.username });
-    }
-  }
+  // private async handleUserLeave(userId: string): Promise<void> {
+  //   const user = await UserModel.findById(userId);
+  //   if (user) {
+  //     this.io
+  //       .to(user.currentRoom)
+  //       .emit("userLeft", { username: user.username });
+  //   }
+  // }
 
   private handleConnection(socket: Socket): void {
     console.log("A user connected");
 
-    socket.on("sendMessage", this.handleSendMessage.bind(this, socket));
+    this.io.emit("new_message", { content: "Hello from server", username: "Admin", roomId: '1000' })
+
+    socket.on("new_message", this.handleSendMessage.bind(this, socket));
     socket.on("disconnect", this.handleDisconnect.bind(this, socket));
   }
 
@@ -102,21 +80,25 @@ class ChatApp {
   ): Promise<void> {
     try {
       const user = await UserModel.findById(socket.handshake.query.userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
       const message = await MessageModel.create({
-        user: user?._id,
+        user: user._id,
         content,
-        roomId: user?.currentRoom,
+        roomId: user?.activeRoomId,
       });
 
-      this.io.to(user?.currentRoom).emit("message", { message });
-    } catch (error) {
+      this.io.to(user.activeRoomId).emit("message", { message });
+    } catch (error: any) {
       console.error("Error sending message:", error.message);
     }
   }
 
   private async handleDisconnect(socket: Socket): Promise<void> {
-    console.log("User disconnected");
-    await this.handleUserLeave(socket.handshake.query.userId);
+    console.log("User disconnected", socket.handshake.query.userId);
+    // await this.handleUserLeave(socket.handshake.query.userId);
   }
 
   public startServer(port: number): void {
@@ -127,4 +109,4 @@ class ChatApp {
 }
 
 const chatApp = new ChatApp();
-chatApp.startServer(3000);
+chatApp.startServer(5000);

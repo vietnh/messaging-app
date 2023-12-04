@@ -1,13 +1,13 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface User {
-  username: string;
+  userName: string;
   activeRoomId: string;
 }
 
 const userSchema = new Schema<User & Document>(
   {
-    username: {
+    userName: {
       type: String,
       required: true,
       unique: true,
