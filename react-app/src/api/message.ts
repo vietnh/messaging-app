@@ -30,6 +30,14 @@ export const messageApi = createApi({
       }),
     }),
 
+    logout: build.mutation<boolean, LoginCredentials>({
+      query: (credentials) => ({
+        url: "api/logout",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
+
     getMessages: build.query<Message[], string>({
       query: (roomId) => `api/messages/${roomId}`,
       async onCacheEntryAdded(
@@ -69,4 +77,4 @@ export const messageApi = createApi({
   }),
 })
 
-export const { useLoginMutation, useGetMessagesQuery } = messageApi
+export const { useLoginMutation, useLogoutMutation, useGetMessagesQuery } = messageApi

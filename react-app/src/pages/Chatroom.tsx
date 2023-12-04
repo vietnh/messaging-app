@@ -1,6 +1,6 @@
 import styled from "styled-components"
 import PageWithHeader from "../components/PageWithHeader"
-import { useGetMessagesQuery } from "../api/message"
+import { useGetMessagesQuery, useLogoutMutation } from "../api/message"
 import { useParams } from "react-router-dom"
 import { useState } from "react"
 import send from "../Send.svg"
@@ -13,6 +13,13 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: space-between;
   gap: 16px;
+`
+
+const ExitText = styled.div`
+  font-size: 16px;
+  font-weight: 500;
+  color: #5db075;
+  cursor: pointer;
 `
 
 const InputContainer = styled.div`
@@ -41,23 +48,36 @@ const Input = styled.input`
 `
 
 const Chatroom: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const userInfo = useGetUserInfo();
+  const { id } = useParams<{ id: string }>()
+  const userInfo = useGetUserInfo()
   const [message, setMessage] = useState("")
 
   if (!id) {
-    return null;
+    return null
   }
 
   const { data, error, isLoading } = useGetMessagesQuery(id)
+  const [logout] = useLogoutMutation() 
 
   const handleSubmit = () => {
     const socket = getOrInitSocket()
     socket.emit(SocketEvent.SEND_MESSAGE, { ...userInfo, message })
   }
 
+  const handleLogout = async () => {
+    const response = (await logout(userInfo)) as any
+
+    if (response?.data) {
+      localStorage.clear()
+      window.location.href = "/login"
+    }
+  }
+
   return (
-    <PageWithHeader title={id}>
+    <PageWithHeader
+      title={id}
+      leftContent={<ExitText onClick={() => handleLogout()}>Exit</ExitText>}
+    >
       <Container>
         <div>test</div>
         <InputContainer>

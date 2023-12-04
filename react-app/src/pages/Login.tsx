@@ -2,7 +2,6 @@ import styled from "styled-components"
 import PageWithHeader from "../components/PageWithHeader"
 import { useState } from "react"
 import { useLoginMutation } from "../api/message"
-import { getOrInitSocket } from "../core/socket"
 
 const Container = styled.div`
   display: flex;
@@ -43,19 +42,21 @@ const Login: React.FC = () => {
   const [userName, setUserName] = useState("")
   const [roomId, setRoomId] = useState("")
 
-  const [login, { isLoading }] = useLoginMutation();
+  const [login, { isLoading }] = useLoginMutation()
 
   const handleLogin = async () => {
     try {
-      await login({ userName, roomId }) as any;
+      const response = (await login({ userName, roomId })) as any
 
-      localStorage.setItem('userName', userName);
-      localStorage.setItem('roomId', roomId);
-      window.location.href = `/room/${roomId}`;
+      if (response?.data) {
+        localStorage.setItem("userName", userName)
+        localStorage.setItem("roomId", roomId)
+        window.location.href = `/room/${roomId}`
+      }
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error("Error during login:", error)
     }
-  };
+  }
 
   return (
     <PageWithHeader title="Join Chatroom">
