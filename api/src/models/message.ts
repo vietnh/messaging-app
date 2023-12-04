@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-interface Message {
+export interface Message {
   userId: mongoose.Types.ObjectId;
   roomId: string;
   message: string;
