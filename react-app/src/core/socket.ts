@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client"
+import { useGetUserInfo } from "./hooks";
 
 let socket: Socket;
 
@@ -9,9 +10,13 @@ export enum SocketEvent {
   LEAVE_ROOM = "leave_room",
 }
 
-export function getSocket() {
+export function getOrInitSocket() {
   if (!socket) {
-    socket = io(`ws://${import.meta.env.API_HOST}`);
+    const { userName, roomId } = useGetUserInfo();
+
+    socket = io(`ws://${import.meta.env.VITE_API_HOST}`, {
+      query: { userName, roomId },
+    })
   }
   return socket;
 }
