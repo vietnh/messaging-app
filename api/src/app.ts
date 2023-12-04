@@ -2,10 +2,11 @@ import express, { Application } from "express";
 import http from "http";
 import mongoose from "mongoose";
 import { Server as SocketIoServer, Socket } from "socket.io";
-import UserModel from "./models/user";
-import MessageModel from "./models/message";
+import MessageModel, { Message } from "./models/message";
 import routes from "./routes";
 import cors from "cors";
+import { SocketEvent } from "./interfaces/socket";
+import { findByNameAndRoomId } from "./repositories/users";
 
 class ChatApp {
   private app: Application;
@@ -15,7 +16,12 @@ class ChatApp {
   constructor() {
     this.app = express();
     this.server = http.createServer(this.app);
-    this.io = new SocketIoServer(this.server);
+    this.io = new SocketIoServer(this.server, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+    });
 
     this.configureMiddleware();
     this.configureRoutes();
@@ -36,63 +42,55 @@ class ChatApp {
     this.io.on("connection", this.handleConnection.bind(this));
   }
 
-  private connectToDatabase(): void {
-    mongoose.connect("mongodb://localhost:27017/chatApp", {
+  private async connectToDatabase(): Promise<void> {
+    await mongoose.connect("mongodb://localhost:27017/chatApp", {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     } as mongoose.ConnectOptions);
+
+    const messageCount = await MessageModel.countDocuments();
+
+    if (messageCount === 0) {
+      const messages = Array.from({ length: 50 }).map((_, i) => ({
+        userName: i % 2 === 0 ? "viet" : "hanh",
+        content: `This is message ${i + 1}`,
+        roomId: "1000",
+      }));
+
+      await MessageModel.insertMany(messages);
+    }
   }
 
-  // private async handleUserJoin(username: string, room: string): Promise<void> {
-  //   this.io.to(room).emit("userJoined", { username });
-
-  //   const user = await UserModel.findOneAndUpdate(
-  //     { username },
-  //     { username, currentRoom: room },
-  //     { upsert: true, new: true }
-  //   );
-
-  //   const messages = await MessageModel.find({ roomId: room }).populate("user");
-  //   this.io.to(user.currentRoom).emit("roomMessages", { messages });
-  // }
-
-  // private async handleUserLeave(userId: string): Promise<void> {
-  //   const user = await UserModel.findById(userId);
-  //   if (user) {
-  //     this.io
-  //       .to(user.currentRoom)
-  //       .emit("userLeft", { username: user.username });
-  //   }
-  // }
-
-  private handleConnection(socket: Socket): void {
+  private async handleConnection(socket: Socket): Promise<void> {
     console.log("A user connected");
 
-    this.io.emit("new_message", { content: "Hello from server", username: "Admin", roomId: '1000' })
+    const user = await findByNameAndRoomId(
+      socket.handshake.query.userName as string,
+      socket.handshake.query.roomId as string
+    );
 
-    socket.on("new_message", this.handleSendMessage.bind(this, socket));
+    socket.join(user.activeRoomId);
+    socket.on(SocketEvent.SEND_MESSAGE, async (data) => {
+      const message = await this.handleSendMessage(socket, data);
+      this.io.to(user.activeRoomId).emit(SocketEvent.RECEIVE_MESSAGE, message);
+    });
     socket.on("disconnect", this.handleDisconnect.bind(this, socket));
   }
 
-  private async handleSendMessage(
-    socket: Socket,
-    { content }: { content: string }
-  ): Promise<void> {
+  private async handleSendMessage(socket: Socket, data: any): Promise<Message> {
     try {
-      const user = await UserModel.findById(socket.handshake.query.userId);
-      if (!user) {
-        throw new Error("User not found");
-      }
+      const user = await findByNameAndRoomId(
+        socket.handshake.query.userName as string,
+        socket.handshake.query.roomId as string
+      );
 
-      const message = await MessageModel.create({
-        user: user._id,
-        content,
-        roomId: user?.activeRoomId,
+      return await MessageModel.create({
+        userName: user.userName,
+        roomId: user.activeRoomId,
+        content: data.message,
       });
-
-      this.io.to(user.activeRoomId).emit("message", { message });
     } catch (error: any) {
-      console.error("Error sending message:", error.message);
+      throw error("Error sending message:", error.message);
     }
   }
 

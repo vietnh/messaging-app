@@ -10,6 +10,7 @@ const routes = (io: Server) => {
   const messagesController = new MessagesController(io);
 
   router.post("/api/login", loginController.login);
+  router.post("/api/logout", loginController.logout);
   router.get("/api/messages/:roomId", messagesController.getMessages);
   router.post("/api/messages", messagesController.addMessage);
 

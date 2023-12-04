@@ -10,7 +10,6 @@ const userSchema = new Schema<User & Document>(
     userName: {
       type: String,
       required: true,
-      unique: true,
     },
     activeRoomId: {
       type: String,
@@ -19,6 +18,8 @@ const userSchema = new Schema<User & Document>(
   },
   { timestamps: true }
 );
+
+userSchema.index({ userName: 1, activeRoomId: 1 }, { unique: true });
 
 const UserModel = mongoose.model<User & Document>("User", userSchema);
 
