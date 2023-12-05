@@ -42,7 +42,7 @@ const Chatroom: React.FC = () => {
     return null
   }
 
-  const { data, error, isLoading } = useGetMessagesQuery(id)
+  const { data, isLoading } = useGetMessagesQuery(id)
   const [logout] = useLogoutMutation()
 
   const handleSubmit = () => {
@@ -52,7 +52,14 @@ const Chatroom: React.FC = () => {
   }
 
   const handleLogout = async () => {
-    const response = (await logout(userInfo)) as any
+    if (!userInfo || !userInfo.userName || !userInfo.roomId) {
+      return
+    }
+
+    const response = (await logout({
+      userName: userInfo.userName,
+      roomId: userInfo.roomId,
+    })) as any
 
     if (response?.data) {
       localStorage.clear()
@@ -69,8 +76,6 @@ const Chatroom: React.FC = () => {
         <MessageContainer>
           {isLoading ? (
             <div>Loading...</div>
-          ) : error ? (
-            <div>{error.message}</div>
           ) : (
             data?.map((message) => (
               <Message
@@ -88,8 +93,8 @@ const Chatroom: React.FC = () => {
           placeholder="Message here..."
           required
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => {
+          onChange={(e: any) => setMessage(e.target.value)}
+          onKeyDown={(e: any) => {
             if (e.key === "Enter") {
               handleSubmit()
             }

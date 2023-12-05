@@ -58,4 +58,4 @@ const Message: React.FC<MessageProps> = ({ userName, isOwner, content }) => {
   )
 }
 
-export default Message;
+export default Message

@@ -1,7 +1,7 @@
 import { useGetUserInfo } from "./core/hooks"
 
 function App() {
-  const userInfo = useGetUserInfo();
+  const userInfo = useGetUserInfo()
 
   if (!userInfo) {
     window.location.href = "/login"
@@ -9,9 +9,7 @@ function App() {
     window.location.href = `/room/${userInfo.roomId}`
   }
 
-  return (
-    <>Loading...</>
-  )
+  return <>Loading...</>
 }
 
 export default App

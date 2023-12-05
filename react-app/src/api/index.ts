@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { SocketEvent, getOrInitSocket } from "../core/socket"
 
 export interface Message {
+  _id: string
   roomId: string
   userName: string
   content: string
@@ -53,7 +54,7 @@ export const api = createApi({
 
           await cacheDataLoaded
 
-          const handleReceiveMessage = (message) => {
+          const handleReceiveMessage = (message: Message) => {
             if (message.roomId !== arg) return
 
             updateCachedData((draft) => {

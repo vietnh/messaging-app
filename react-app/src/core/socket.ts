@@ -1,7 +1,7 @@
 import { io, Socket } from "socket.io-client"
-import { useGetUserInfo } from "./hooks";
+import { useGetUserInfo } from "./hooks"
 
-let socket: Socket;
+let socket: Socket
 
 export enum SocketEvent {
   SEND_MESSAGE = "send_message",
@@ -12,11 +12,11 @@ export enum SocketEvent {
 
 export function getOrInitSocket() {
   if (!socket) {
-    const { userName, roomId } = useGetUserInfo();
+    const { userName, roomId } = useGetUserInfo()
 
     socket = io(`ws://${import.meta.env.VITE_API_HOST}`, {
       query: { userName, roomId },
     })
   }
-  return socket;
+  return socket
 }
