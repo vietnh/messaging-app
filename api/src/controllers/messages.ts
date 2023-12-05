@@ -7,7 +7,9 @@ class MessagesController {
 
   getMessages: RequestHandler<{ roomId: string }> = async (req, res) => {
     try {
-      const messages = await MessageModel.find({ roomId: req.params.roomId });
+      const messages = await MessageModel.find({
+        roomId: req.params.roomId,
+      }).sort({ createdAt: -1 });
       return res.json(messages);
     } catch (error: any) {
       console.error("Error getting messages:", error.message);
