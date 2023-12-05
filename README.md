@@ -9,15 +9,17 @@ Instructions to run locally:
   docker-compose up --build
   ```
   This will start the backend server, frontend development server, and the database.
+
 3. Access the application in your browser at http://localhost:3000.
 
 Time spent:
 - Build the app with Express, Socket.io, Vite: 2 hours
-- Implement backend API: 2 hours
+- Implement backend API: 3 hours
 - Implement ReactJS app using Vite, Redux Toolkit, RTK Query: 5 hours
 - Handle web socket data transfer between backend and frontend: 2 hours
 - Testing and bug fixings: 1 hour
 - Write README: 0.5 hour
+- Total: 13.5 hours
 
 Assumptions made:
 - User can only join 1 room at a time.
@@ -27,28 +29,28 @@ Compromises made:
 - All messages (of a room) are fetched without pagination/lazy loading. Should have handled that if I have time.
 - Didn't handle edge cases. For example, users shutting down the browser instantly, which can cause some unexpected errors.
 - Didn't handle logging, which is very important in a real-world application.
-- Unit tests were not implemented. Should have done that if I have time.
+- Unit tests were not implemented due to time constraints.
 
-Go production checklist:
-- Test coverage should be around 70-80% (or more depends on each project).
-- Security testing. There must be some tools for this, including manual effort for complex cases.
-- Cross browsers and cross devices testing.
-- Monitoring and logging should be handled.
-- Document changes for the production.
+Production readiness checklist:
+- Achieve a test coverage of around 70-80% (or more, depending on the project).
+- Conduct security testing. This can be done using automated tools and manual testing for complex cases.
+- Perform cross-browser and cross-device testing.
+- Ensure monitoring and logging are properly set up.
+- Document changes for the production environment.
 
-High concurrent users:
-Honestly, I don't have experience in this part, never joined a social platform development or anything that requires it. Some basic things pop in my mind:
-- Load balancing to distribute load.
-- Caching for reducing load on the database.
-- Database indexing for query optimization.
+Handling high concurrent users:
+While I don't have direct experience in this area, some basic strategies come to mind:
+- Implement load balancing to distribute the load.
+- Use caching to reduce the load on the database.
+- Apply database indexing for query optimization.
 
-Ensure security:
-- Probably apply multi-factor authentication.
-- Use HTTPS to secure data between server and client.
-- Use a firewall/VPC to hide internal/core services.
-- Validate user inputs.
+Ensuring security:
+- Consider applying multi-factor authentication.
+- Use HTTPS to secure data transmission between the server and client.
+- Use a firewall or VPC to protect internal/core services.
+- Validate user inputs to prevent malicious data entry.
 
-Did not include:
-- API pagination for messages (not enough time).
-- Unit testing (not enough time).
-- There are bugs somewhere, probably. I didn't handle everything.
+Not included in this version:
+- API pagination for messages (due to time constraints).
+- Unit testing (due to time constraints).
+- There may be bugs present as not all scenarios have been handled.
