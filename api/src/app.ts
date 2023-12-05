@@ -43,16 +43,17 @@ class ChatApp {
   }
 
   private async connectToDatabase(): Promise<void> {
-    await mongoose.connect("mongodb://localhost:27017/chatApp", {
+    await mongoose.connect("mongodb://mongodb:27017/chatApp", {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     } as mongoose.ConnectOptions);
 
+    // Seed data
     const messageCount = await MessageModel.countDocuments();
 
     if (messageCount === 0) {
       const messages = Array.from({ length: 50 }).map((_, i) => ({
-        userName: i % 2 === 0 ? "viet" : "hanh",
+        userName: i % 2 === 0 ? "user_1" : "user_2",
         content: `This is message ${i + 1}`,
         roomId: "1000",
       }));
