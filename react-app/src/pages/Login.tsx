@@ -38,17 +38,25 @@ const Button = styled.button`
   cursor: pointer;
 `
 
+const ErrorText = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: #f44336;
+  margin-top: 8px;
+  text-align: center;
+`
+
 const Login: React.FC = () => {
   const [userName, setUserName] = useState("")
   const [roomId, setRoomId] = useState("")
 
-  const [login, { isLoading }] = useLoginMutation()
+  const [login, { isLoading, error }] = useLoginMutation()
 
   const handleLogin = async () => {
     try {
-      const response = (await login({ userName, roomId })) as any
+      const { data } = (await login({ userName, roomId })) as any
 
-      if (response?.data) {
+      if (data) {
         localStorage.setItem("userName", userName)
         localStorage.setItem("roomId", roomId)
         window.location.href = `/room/${roomId}`
@@ -82,7 +90,10 @@ const Login: React.FC = () => {
               }
             }}
           />
-          <Button onClick={() => handleLogin()}>JOIN</Button>
+          {error && <ErrorText>{error.data.error}</ErrorText>}
+          <Button onClick={() => handleLogin()} disabled={!userName || !roomId}>
+            JOIN
+          </Button>
         </Form>
       </Container>
     </PageWithHeader>
