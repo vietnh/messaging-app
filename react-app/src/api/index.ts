@@ -17,7 +17,7 @@ export interface LoginResponse {
   activeRoomId: string
 }
 
-export const messageApi = createApi({
+export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `http://${import.meta.env.VITE_API_HOST}`,
   }),
@@ -51,24 +51,18 @@ export const messageApi = createApi({
             console.error("WebSocket error:", event)
           })
 
-          // wait for the initial query to resolve before proceeding
           await cacheDataLoaded
 
-          // when data is received from the socket connection to the server,
-          // if it is a message for the appropriate channel,
-          // update our query result with the received message
-          const listener = (message) => {
+          const handleReceiveMessage = (message) => {
             if (message.roomId !== arg) return
 
             updateCachedData((draft) => {
-              draft.push(message)
+              draft.unshift(message)
             })
-            alert(message)
           }
 
-          socket.on(SocketEvent.RECEIVE_MESSAGE, listener)
+          socket.on(SocketEvent.RECEIVE_MESSAGE, handleReceiveMessage)
         } catch (e) {}
-        // cacheEntryRemoved will resolve when the cache subscription is no longer active
         await cacheEntryRemoved
         socket.off(SocketEvent.RECEIVE_MESSAGE)
         socket.close()
@@ -77,4 +71,4 @@ export const messageApi = createApi({
   }),
 })
 
-export const { useLoginMutation, useLogoutMutation, useGetMessagesQuery } = messageApi
+export const { useLoginMutation, useLogoutMutation, useGetMessagesQuery } = api

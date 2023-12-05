@@ -1,11 +1,13 @@
 import styled from "styled-components"
 import PageWithHeader from "../components/PageWithHeader"
-import { useGetMessagesQuery, useLogoutMutation } from "../api/message"
+import { useGetMessagesQuery, useLogoutMutation } from "../api"
 import { useParams } from "react-router-dom"
 import { useState } from "react"
 import send from "../Send.svg"
 import { SocketEvent, getOrInitSocket } from "../core/socket"
 import { useGetUserInfo } from "../core/hooks"
+import { TextFieldWithIcon } from "../components/TextField"
+import Message from "../components/Message"
 
 const Container = styled.div`
   display: flex;
@@ -22,29 +24,13 @@ const ExitText = styled.div`
   cursor: pointer;
 `
 
-const InputContainer = styled.div`
-  position: relative;
-  display: inline-block;
-`
-
-const SendIcon = styled.img`
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-`
-
-const Input = styled.input`
-  width: 100%;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 16px;
-  color: #bdbdbd;
-  background-color: #f6f6f6;
-  border: 1px solid #e8e8e8;
-  border-radius: 100px;
-  padding-right: 50px;
+const MessageContainer = styled.div`
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 16px;
+  padding-right: 16px;
+  overflow-y: auto;
+  height: calc(100vh - 190px);
 `
 
 const Chatroom: React.FC = () => {
@@ -57,11 +43,12 @@ const Chatroom: React.FC = () => {
   }
 
   const { data, error, isLoading } = useGetMessagesQuery(id)
-  const [logout] = useLogoutMutation() 
+  const [logout] = useLogoutMutation()
 
   const handleSubmit = () => {
     const socket = getOrInitSocket()
     socket.emit(SocketEvent.SEND_MESSAGE, { ...userInfo, message })
+    setMessage("")
   }
 
   const handleLogout = async () => {
@@ -79,17 +66,36 @@ const Chatroom: React.FC = () => {
       leftContent={<ExitText onClick={() => handleLogout()}>Exit</ExitText>}
     >
       <Container>
-        <div>test</div>
-        <InputContainer>
-          <Input
-            type="text"
-            placeholder="Message here..."
-            required
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <SendIcon src={send} alt="send" onClick={() => handleSubmit()} />
-        </InputContainer>
+        <MessageContainer>
+          {isLoading ? (
+            <div>Loading...</div>
+          ) : error ? (
+            <div>{error.message}</div>
+          ) : (
+            data?.map((message) => (
+              <Message
+                key={message._id}
+                userName={message.userName}
+                isOwner={message.userName === userInfo.userName}
+                content={message.content}
+              />
+            ))
+          )}
+        </MessageContainer>
+        <TextFieldWithIcon
+          type="text"
+          src={send}
+          placeholder="Message here..."
+          required
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSubmit()
+            }
+          }}
+          onClick={() => handleSubmit()}
+        />
       </Container>
     </PageWithHeader>
   )

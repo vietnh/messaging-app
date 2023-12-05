@@ -1,7 +1,7 @@
 import styled from "styled-components"
 import PageWithHeader from "../components/PageWithHeader"
 import { useState } from "react"
-import { useLoginMutation } from "../api/message"
+import { useLoginMutation } from "../api"
 
 const Container = styled.div`
   display: flex;
@@ -65,6 +65,7 @@ const Login: React.FC = () => {
           <Input
             type="text"
             placeholder="Username"
+            autoFocus
             required
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
@@ -75,6 +76,11 @@ const Login: React.FC = () => {
             required
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleLogin()
+              }
+            }}
           />
           <Button onClick={() => handleLogin()}>JOIN</Button>
         </Form>

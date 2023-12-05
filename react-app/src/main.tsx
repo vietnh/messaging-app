@@ -8,12 +8,17 @@ import "./index.css"
 import Login from "./pages/Login"
 import Layout from "./layout/AppLayout"
 import Chatroom from "./pages/Chatroom"
+import App from "./App"
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     children: [
+      {
+        path: "/",
+        element: <App />,
+      },
       {
         path: "/login",
         element: <Login />,
